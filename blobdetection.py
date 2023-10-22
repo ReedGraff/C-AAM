@@ -9,7 +9,7 @@ start_word = "hellfire"
 stop_word = "recall"
 
 for string in os.listdir("/dev"):
-    if "cu.usbserial" in string:
+    if "ttyUSB" in string:
         PATH = "/dev/" + string
         break
 print(PATH)
@@ -63,17 +63,25 @@ def detect_color_blobs(frame, target_color_rgb, tolerance=15):
     return frame, largest_center
 
 # Capture video from the default camera
-cap = cv2.VideoCapture(0)
+cam = 0
+import sys
+if (len(sys.argv) > 1):
+    cam = int(sys.argv[1])
+cap = cv2.VideoCapture(cam)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
 # Get the screen center
 _, initial_frame = cap.read()
 screen_center_x = initial_frame.shape[1] // 2
 screen_center_y = initial_frame.shape[0] // 2
+print(initial_frame.shape)
 
 
 last_printed = None
 
 if PATH != "":
+    time.sleep(0.1)
     ser = serial.Serial(PATH)
 
 while True:

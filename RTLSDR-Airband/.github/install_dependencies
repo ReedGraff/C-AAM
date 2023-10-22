@@ -1,0 +1,49 @@
+#!/bin/bash
+
+unameOut="$(uname -s)"
+
+echo "Running on ${unameOut} as ${USER}"
+
+case "${unameOut}" in
+    Linux*)
+        echo "Installing Linux dependencies"
+        sudo apt-get update -y
+        sudo apt-get install -y \
+            build-essential \
+            cmake \
+            libmp3lame-dev \
+            libshout3-dev \
+            libconfig++-dev \
+            libfftw3-dev \
+            librtlsdr-dev \
+            libsoapysdr-dev \
+            libpulse-dev
+        ;;
+
+    Darwin*)
+        echo "Installing MacOS dependencies"
+        brew update
+
+        # brew upgrade is taking 45+ min on macos-11 images, so skip it
+        if [[ $(sw_vers -productVersion | cut -d '.' -f 1) -le 11 ]] ; then 
+            echo 'skipping brew upgrade'
+        else
+            brew upgrade
+        fi
+
+        brew install \
+            lame \
+            libshout \
+            libconfig \
+            fftw \
+            librtlsdr \
+            soapysdr \
+            pulseaudio \
+            pkg-config
+
+        ;;
+
+    *)
+        echo "Error: Machine not supported"
+        exit -1
+esac
