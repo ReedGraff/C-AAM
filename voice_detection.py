@@ -4,10 +4,30 @@ from google.cloud import speech_v1
 from google.cloud.speech_v1 import types
 import pyaudio
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "path_to_your_service_account_key.json"
+os.environ["key"] = "AIzaSyAx639c5Nzd4ff3DxtXCwHGmskY4WV8PhE"
+print(os.environ['key'])
+
+def levenshtein_distance(s1, s2):
+    if len(s1) > len(s2):
+        s1, s2 = s2, s1
+
+    distances = range(len(s1) + 1)
+    for index2, char2 in enumerate(s2):
+        new_distances = [index2 + 1]
+        for index1, char1 in enumerate(s1):
+            if char1 == char2:
+                new_distances.append(distances[index1])
+            else:
+                new_distances.append(1 + min((distances[index1], distances[index1 + 1], new_distances[-1])))
+        distances = new_distances
+
+    return distances[-1]
+
+def most_similar_word(target_word, word_list):
+    return min(word_list, key=lambda word: levenshtein_distance(target_word, word))
 
 def transcribe_stream_with_word_level_confidence():
-    client = speech_v1.SpeechClient()
+    client = speech_v1.SpeechClient(client_options={"api_key": os.environ['key']})
 
     config = types.RecognitionConfig(
         encoding=speech_v1.RecognitionConfig.AudioEncoding.LINEAR16,
@@ -32,10 +52,7 @@ def transcribe_stream_with_word_level_confidence():
     for response in responses:
         for result in response.results:
             for word_info in result.alternatives[0].words:
-                word = word_info.word.lower()
-                confidence = word_info.confidence
-                if word in ["hellfire", "recall"] and confidence > 0.9:
-                    print(f"Word: {word}, Confidence: {confidence}")
+                print(most_similar_word(word_info.word, ["fire", "recall"]))
 
     stream.stop_stream()
     stream.close()

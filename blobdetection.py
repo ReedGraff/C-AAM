@@ -14,6 +14,7 @@ for string in os.listdir("/dev"):
         break
 print(PATH)
 
+
 def detect_color_blobs(frame, target_color_rgb, tolerance=15):
     # Convert the frame to HSV color space
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -95,37 +96,37 @@ while True:
         if largest_bbox_center:
             screen_center_array = np.array((screen_center_x, screen_center_y))
             bbox_center_array = np.array((largest_bbox_center[0], largest_bbox_center[1]))
-            if np.linalg.norm(screen_center_array - bbox_center_array) < shooting_threshold:
-                    ser.write(b"S")
-                    time.sleep(0.01)
-            
-            cv2.line(processed_frame, (largest_bbox_center[0] - 10, largest_bbox_center[1] - 10), (largest_bbox_center[0] + 10, largest_bbox_center[1] + 10), (0, 0, 0), 2)
-            cv2.line(processed_frame, (largest_bbox_center[0] - 10, largest_bbox_center[1] + 10), (largest_bbox_center[0] + 10, largest_bbox_center[1] - 10), (0, 0, 0), 2)
+            if PATH != "" and np.linalg.norm(screen_center_array - bbox_center_array) > shooting_threshold * 0.5:
+                    # Draw an "X" at the center of the detected bounding box center
+                    try:
 
-            if np.linalg.norm(screen_center_array - bbox_center_array) > shooting_threshold * 0.5:
-                # Draw an "X" at the center of the detected bounding box center
-                try:
-                    if largest_bbox_center[0] < screen_center_x:
-                        ser.write(b"L")
-                        time.sleep(0.01)
-                    elif largest_bbox_center[0] >= screen_center_x:
-                        ser.write(b"R")
-                        time.sleep(0.01)
+                        if PATH != "" and np.linalg.norm(screen_center_array - bbox_center_array) < shooting_threshold:
+                                ser.write(b"S")
+                                time.sleep(0.01)
+                        
+                        cv2.line(processed_frame, (largest_bbox_center[0] - 10, largest_bbox_center[1] - 10), (largest_bbox_center[0] + 10, largest_bbox_center[1] + 10), (0, 0, 0), 2)
+                        cv2.line(processed_frame, (largest_bbox_center[0] - 10, largest_bbox_center[1] + 10), (largest_bbox_center[0] + 10, largest_bbox_center[1] - 10), (0, 0, 0), 2)
+                        if largest_bbox_center[0] < screen_center_x:
+                            ser.write(b"L")
+                            time.sleep(0.01)
+                        elif largest_bbox_center[0] >= screen_center_x:
+                            ser.write(b"R")
+                            time.sleep(0.01)
+                        
+                        if largest_bbox_center[1] < screen_center_y:
+                            ser.write(b"U")
+                            time.sleep(0.01)
+                        elif largest_bbox_center[1] >= screen_center_y:
+                            ser.write(b"D")
+                            time.sleep(0.01)
+
+                        # Convert the points to NumPy arrays
+                        screen_center_array = np.array((screen_center_x, screen_center_y))
+                        bbox_center_array = np.array((largest_bbox_center[0], largest_bbox_center[1]))
                     
-                    if largest_bbox_center[1] < screen_center_y:
-                        ser.write(b"U")
-                        time.sleep(0.01)
-                    elif largest_bbox_center[1] >= screen_center_y:
-                        ser.write(b"D")
-                        time.sleep(0.01)
-
-                    # Convert the points to NumPy arrays
-                    screen_center_array = np.array((screen_center_x, screen_center_y))
-                    bbox_center_array = np.array((largest_bbox_center[0], largest_bbox_center[1]))
-                
-                except serial.SerialException as e:
-                    time.sleep(0.02)
-                    ser = serial.Serial(PATH)
+                    except serial.SerialException as e:
+                        time.sleep(0.05)
+                        ser = serial.Serial(PATH)
 
         # Display the result
         cv2.imshow('Detected Color', processed_frame)
