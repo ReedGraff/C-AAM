@@ -15,9 +15,9 @@ for string in os.listdir("/dev"):
         break
 print(PATH)
 print(PATH or "no path")
+open("/tmp/sync", "w").write("")
 
-
-def detect_color_blobs(frame, target_color_rgb, tolerance=15):
+def detect_color_blobs(frame, target_color_rgb, tolerance=25):
     # Convert the frame to HSV color space
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     
@@ -25,7 +25,7 @@ def detect_color_blobs(frame, target_color_rgb, tolerance=15):
     target_color_hsv = cv2.cvtColor(np.uint8([[target_color_rgb]]), cv2.COLOR_RGB2HSV)[0][0]
     
     # Define the lower and upper bounds for the color detection
-    lower_bound = np.array([target_color_hsv[0] - tolerance, max(target_color_hsv[1] - 40, 0), max(target_color_hsv[2] - 40, 0)])
+    lower_bound = np.array([target_color_hsv[0] - tolerance, max(target_color_hsv[1] - 60, 0), max(target_color_hsv[2] - 60, 0)])
     upper_bound = np.array([target_color_hsv[0] + tolerance, 255, 255])
     
     # Create a mask to isolate the desired color
@@ -88,6 +88,7 @@ if PATH != "":
 def write(a):
     global ENABLED
     if ENABLED: ser.write(a)
+    print(a)
 
 def color():
     global ENABLED
@@ -102,11 +103,12 @@ def toggle():
 while True:
     try:
         word = open("/tmp/sync", "r").read()
-        print(word)
+        #print(word)
         if "ire" in word:
             ENABLED = True
         if "call" in word:
             ENABLED = False
+        open("/tmp/sync", "w").write("")
     except: pass
 
     # Read a frame from the camera
@@ -118,12 +120,12 @@ while True:
     # If the frame was successfully captured
     if ret:
         # Process the frame and detect color blobs
-        processed_frame, largest_bbox_center = detect_color_blobs(frame, target_color_rgb=(169,49,43,255), tolerance=15)
+        processed_frame, largest_bbox_center = detect_color_blobs(frame, target_color_rgb=(169,49,43,255), tolerance=25)
         
         # Draw an "X" at the center of the screen
         cv2.line(processed_frame, (screen_center_x - 10, screen_center_y - 10), (screen_center_x + 10, screen_center_y + 10), (0, 0, 0), 2)
         cv2.line(processed_frame, (screen_center_x - 10, screen_center_y + 10), (screen_center_x + 10, screen_center_y - 10), (0, 0, 0), 2)
-        cv2.circle(processed_frame, (screen_center_x, screen_center_y), 100, color())
+        cv2.circle(processed_frame, (screen_center_x, screen_center_y), 100, color(), 3)
         # Check the position of the largest bounding box center relative to the screen center
         if largest_bbox_center:
             screen_center_array = np.array((screen_center_x, screen_center_y))
@@ -139,10 +141,10 @@ while True:
                         cv2.line(processed_frame, (largest_bbox_center[0] - 10, largest_bbox_center[1] - 10), (largest_bbox_center[0] + 10, largest_bbox_center[1] + 10), (0, 0, 0), 2)
                         cv2.line(processed_frame, (largest_bbox_center[0] - 10, largest_bbox_center[1] + 10), (largest_bbox_center[0] + 10, largest_bbox_center[1] - 10), (0, 0, 0), 2)
                         if largest_bbox_center[0] < screen_center_x:
-                            write(b"L")
+                            write(b"R")
                             time.sleep(0.01)
                         elif largest_bbox_center[0] >= screen_center_x:
-                            write(b"R")
+                            write(b"L")
                             time.sleep(0.01)
                         
                         if largest_bbox_center[1] < screen_center_y:
