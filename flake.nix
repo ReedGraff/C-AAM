@@ -29,6 +29,20 @@ python311Packages.google-cloud-speech
 python311Packages.pyserial
 python311Packages.numpy
 pyopencv4
+cmake
+pkg-config
+lame
+libmp3splt
+libshout
+libconfig
+fftw
+fftwMpi
+fftwQuad
+fftwFloat
+fftwLongDouble
+rtl-sdr
+python311Packages.pyrtlsdr
+libpulseaudio
 #python311Packages.opencv4
         ];
         shellHook = ''

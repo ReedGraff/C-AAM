@@ -4,6 +4,7 @@ import os
 import serial
 import time
 
+ENABLED = True
 PATH = ""
 start_word = "hellfire"
 stop_word = "recall"
@@ -13,6 +14,7 @@ for string in os.listdir("/dev"):
         PATH = "/dev/" + string
         break
 print(PATH)
+print(PATH or "no path")
 
 
 def detect_color_blobs(frame, target_color_rgb, tolerance=15):
@@ -53,7 +55,7 @@ def detect_color_blobs(frame, target_color_rgb, tolerance=15):
         # Filter by aspect ratio (optional)
         aspect_ratio = float(w) / h
         if 0.5 < aspect_ratio < 2:  # Adjust these values based on your requirements
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv2.rectangle(frame, (x, y), (x + w, y + h), color(), 2)
             
             # Find the center of the largest bounding box
             if area > largest_area:
@@ -83,8 +85,30 @@ last_printed = None
 if PATH != "":
     time.sleep(0.1)
     ser = serial.Serial(PATH)
+def write(a):
+    global ENABLED
+    if ENABLED: ser.write(a)
+
+def color():
+    global ENABLED
+    return (0,255,0) if ENABLED else (0,0,255)
+
+def toggle():
+    print("TOGGLE")
+    global ENABLED
+    ENABLED ^= 1
+    print(color(), ENABLED)
 
 while True:
+    try:
+        word = open("/tmp/sync", "r").read()
+        print(word)
+        if "ire" in word:
+            ENABLED = True
+        if "call" in word:
+            ENABLED = False
+    except: pass
+
     # Read a frame from the camera
     ret, frame = cap.read()
     width  = cap.get(3)   # float `width`
@@ -99,7 +123,7 @@ while True:
         # Draw an "X" at the center of the screen
         cv2.line(processed_frame, (screen_center_x - 10, screen_center_y - 10), (screen_center_x + 10, screen_center_y + 10), (0, 0, 0), 2)
         cv2.line(processed_frame, (screen_center_x - 10, screen_center_y + 10), (screen_center_x + 10, screen_center_y - 10), (0, 0, 0), 2)
-        cv2.circle(processed_frame, (screen_center_x, screen_center_y), 100, (0, 255, 0))
+        cv2.circle(processed_frame, (screen_center_x, screen_center_y), 100, color())
         # Check the position of the largest bounding box center relative to the screen center
         if largest_bbox_center:
             screen_center_array = np.array((screen_center_x, screen_center_y))
@@ -109,23 +133,23 @@ while True:
                     try:
 
                         if PATH != "" and np.linalg.norm(screen_center_array - bbox_center_array) < shooting_threshold:
-                                ser.write(b"S")
+                                write(b"S")
                                 time.sleep(0.01)
                         
                         cv2.line(processed_frame, (largest_bbox_center[0] - 10, largest_bbox_center[1] - 10), (largest_bbox_center[0] + 10, largest_bbox_center[1] + 10), (0, 0, 0), 2)
                         cv2.line(processed_frame, (largest_bbox_center[0] - 10, largest_bbox_center[1] + 10), (largest_bbox_center[0] + 10, largest_bbox_center[1] - 10), (0, 0, 0), 2)
                         if largest_bbox_center[0] < screen_center_x:
-                            ser.write(b"L")
+                            write(b"L")
                             time.sleep(0.01)
                         elif largest_bbox_center[0] >= screen_center_x:
-                            ser.write(b"R")
+                            write(b"R")
                             time.sleep(0.01)
                         
                         if largest_bbox_center[1] < screen_center_y:
-                            ser.write(b"U")
+                            write(b"U")
                             time.sleep(0.01)
                         elif largest_bbox_center[1] >= screen_center_y:
-                            ser.write(b"D")
+                            write(b"D")
                             time.sleep(0.01)
 
                         # Convert the points to NumPy arrays
@@ -140,8 +164,11 @@ while True:
         cv2.imshow('Detected Color', processed_frame)
         
         # Break the loop if 'q' key is pressed
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'):
             break
+        if key == ord(' '):
+            toggle()
     else:
         print("Failed to grab frame")
 
