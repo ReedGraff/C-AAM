@@ -52,7 +52,7 @@ def transcribe_stream_with_word_level_confidence():
     for response in responses:
         for result in response.results:
             for word_info in result.alternatives[0].words:
-                print(most_similar_word(word_info.word, ["fire", "recall"]))
+                print(most_similar_word(word_info.word, ["hellfire", "recall"]))
 
     stream.stop_stream()
     stream.close()
