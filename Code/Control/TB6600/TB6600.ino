@@ -59,10 +59,10 @@ void loop() {
   if (vPreviousTime >  (millis() - moveDuration)) {
     if (vCommand == 'U') {
       digitalWrite(dirPin2, HIGH);
-      stepv();
+      stepv(1);
     } else if (vCommand == 'D') {
       digitalWrite(dirPin2, LOW);
-      stepv();
+      stepv(-1);
     }
   }
 }
@@ -71,7 +71,7 @@ void loop() {
 long long hswT = 0;
 boolean hstate = 0;
 void steph() {
-  const int n = 4 * 1000;
+  const int n =5 * 1000;
   if (hswT < (micros() - n)) {
     hstate ^= 1;
     hswT = micros();
@@ -81,7 +81,14 @@ void steph() {
 }
 long long vswT = 0;
 boolean vstate = 0;
-void stepv() {
+int total = 0;
+void stepv(int dir) {
+  delay(1);
+  return;
+  if (abs(dir) > 2) {
+    return;
+  }
+
   const int n = 100 * 1000;
   if (vswT < (micros() - n)) {
     vstate ^= 1;
@@ -89,4 +96,5 @@ void stepv() {
 
   }
   digitalWrite(stepPin2, vstate);
+    total += dir; // assume 2deg / step
 }
